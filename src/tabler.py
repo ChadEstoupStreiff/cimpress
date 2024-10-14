@@ -13,16 +13,15 @@ def border_table(table, x, y):
 
 
 def get_corners(table):
+    coords = np.argwhere(table == -1)
     corners = []
-    for x in range(table.shape[0]):
-        for y in range(table.shape[1]):
-            if table[x][y] == -1:
-                borders = border_table(table, x, y)
-                if sum(borders) >= 2:
-                    corners.append((x, y))
+
+    for x, y in coords:
+        borders = border_table(table, x, y)
+        if np.sum(borders) >= 2:
+            corners.append((x, y))
 
     return corners
-
 
 def read_table(input_path: str) -> List[List[str]]:
     with open(input_path, "r") as f:
