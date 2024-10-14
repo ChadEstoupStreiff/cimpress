@@ -21,11 +21,12 @@ def print_table(table, print_corners=True, highlights=None):
         return "dark_grey"
 
     for x in range(table.shape[0]):
+        print()
         for y in range(table.shape[1]):
             print(
-                colored("  ■", get_color_for_cell(x, y))
+                colored("   ■", get_color_for_cell(x, y))
                 if table[x][y] < 1
-                else f"{table[x][y]:3}",
+                else f"{table[x][y]:4}",
                 end="",
             )
         print()

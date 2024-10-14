@@ -1,8 +1,6 @@
-
 import numpy as np
-from tabler import border_table, get_corners
+from tabler import border_table, get_corners, get_isolated
 from tqdm import tqdm
-from printer import print_table
 
 
 def is_empty(table):
@@ -13,53 +11,71 @@ def is_complete(table):
     return -1 not in table
 
 
-def place_square(table, x, y, depth_index):
-    border = border_table(table, x, y)
+def place_square(table, x_a, y_a, depth_index):
+    border = border_table(table, x_a, y_a)
     x_dir = 1 if border[0] == 1 else -1
     y_dir = 1 if border[2] == 1 else -1
-    size = 0
-
-    x_b = x + x_dir * size
-    y_b = y + y_dir * size
+    size = 1
 
     while True:
-        x_b = x + x_dir * size
-        y_b = y + y_dir * size
+        x_b = x_a + x_dir * size
+        y_b = y_a + y_dir * size
         if (
             x_b < 0
-            or x_b > table.shape[0]
+            or x_b >= table.shape[0]
             or y_b < 0
-            or y_b > table.shape[1]
-            or not is_empty(table[min(x, x_b) : max(x, x_b), min(y, y_b) : max(y, y_b)])
+            or y_b >= table.shape[1]
+            or not is_empty(
+                table[
+                    min(x_a, x_b) : max(x_a, x_b) + 1, min(y_a, y_b) : max(y_a, y_b) + 1
+                ]
+            )
         ):
             break
         size += 1
 
     size -= 1
-    if size > 0:
-        x_b = x + x_dir * size
-        y_b = y + y_dir * size
-        table[min(x, x_b) : max(x, x_b), min(y, y_b) : max(y, y_b)] = depth_index
+    x_b = x_a + x_dir * size
+    y_b = y_a + y_dir * size
+    table[min(x_a, x_b) : max(x_a, x_b) + 1, min(y_a, y_b) : max(y_a, y_b) + 1] = (
+        depth_index
+    )
     return table
 
 
+def fill_isolated(table, square_index, max_authorized_index):
+    isolated = get_isolated(table)
+    while len(isolated) > 0:
+        for x, y in isolated:
+            table[x, y] = square_index
+            square_index += 1
+            if square_index > max_authorized_index:
+                return None, square_index
+        isolated = get_isolated(table)
+    return table, square_index
 
-def random_solve(table, square_index=1, tqdm_disable=True):
+
+def does_sol_exists(table, solutions):
+    for sol in solutions:
+        if np.array_equal(sol, table):
+            return True
+    return False
+
+
+def random_solve(table, square_index=1, max_authorized_index=np.inf, tqdm_disable=True):
     # Check if complete
     if is_complete(table):
         return table
 
+    if square_index > max_authorized_index:
+        return None
+
     # Remove small ones
-    corners = get_corners(table)
-    for x, y in corners:
-        border = border_table(table, x, y)
-        if (
-            sum(border) > 2
-            or (border[0] == 1 and border[1] == 1)
-            or (border[2] == 1 and border[3] == 1)
-        ):
-            table[x, y] = square_index
-            square_index += 1
+    table, square_index = fill_isolated(
+        table, square_index, max_authorized_index=max_authorized_index
+    )
+    if table is None:
+        return None
 
     # Calculate bigger square possible on corners
     if is_complete(table):
@@ -72,8 +88,16 @@ def random_solve(table, square_index=1, tqdm_disable=True):
 
         new_table = place_square(new_table, x, y, square_index)
 
-        sol = random_solve(new_table, square_index=square_index + 1)
-        solutions.append(sol)
+        if not does_sol_exists(new_table, solutions):
+            sol = random_solve(
+                new_table,
+                square_index=square_index + 1,
+                max_authorized_index=max_authorized_index,
+            )
+            if sol is not None:
+                if np.max(sol) < max_authorized_index:
+                    max_authorized_index = np.max(sol)
+                solutions.append(sol)
 
     # Find best solution
     min_number = np.inf
