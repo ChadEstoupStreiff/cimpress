@@ -1,18 +1,13 @@
-from tabler import get_corners
+from solver import get_corners
 from termcolor import colored
 
 
-def print_table(table, print_corners=True, highlights=None):
-    if highlights is not None:
-        table = table.copy()
-        table[highlights[0] : highlights[2], highlights[1] : highlights[3]] = -2
+def print_table(table, print_corners=True):
     corners = []
     if print_corners:
         corners = get_corners(table)
 
     def get_color_for_cell(x, y):
-        if table[x][y] == -2:
-            return "green"
         if (x, y) in corners:
             return "red"
 
@@ -30,4 +25,3 @@ def print_table(table, print_corners=True, highlights=None):
                 end="",
             )
         print()
-    print()

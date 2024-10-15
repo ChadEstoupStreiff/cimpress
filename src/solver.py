@@ -58,9 +58,21 @@ def place_square(table, x_a, y_a, depth_index):
         depth_index
     )
 
+seen_tables = set()
+def pass_unique_test(table):
+    table_hash = tuple(map(tuple, table))
+    if table_hash in seen_tables:
+        return False
+    seen_tables.add(table_hash)
+    return True
+
+def solve(table, square_index=1, tqdm_disable=True, max_authorized_index=np.inf):
+    seen_tables.clear()
+    return recursive_solve(table, square_index, tqdm_disable, max_authorized_index)
+
 # Return the best solution for the table, return None if out of limits
 # Do a copy instead of revert, a bit faster (10%)
-def solve(table, square_index=1, tqdm_disable=True, max_authorized_index=np.inf):
+def recursive_solve(table, square_index=1, tqdm_disable=True, max_authorized_index=np.inf):
 
     # Check if complete
     if is_complete(table):
@@ -83,18 +95,17 @@ def solve(table, square_index=1, tqdm_disable=True, max_authorized_index=np.inf)
 
     for x_a, y_a in tqdm(corners, disable=tqdm_disable):
         # Place the square and modify the table
-
         new_table = table.copy()
         place_square(new_table, x_a, y_a, square_index)
 
-        # Recursive call to solve_copy, not solve
-        sol = solve(new_table, square_index + 1, max_authorized_index=max_authorized_index)
-        if sol is not None:
-            sol_index = np.max(sol)
-            # If the solution is better, update the best solution
-            if sol_index < best_sol_index:
-                best_sol = sol
-                best_sol_index = sol_index
-                max_authorized_index = best_sol_index
-
+        if pass_unique_test(np.clip(new_table, a_min=None, a_max=1)):
+            # Recursive call to solve_copy, not solve
+            sol = recursive_solve(new_table, square_index + 1, max_authorized_index=max_authorized_index)
+            if sol is not None:
+                sol_index = np.max(sol)
+                # If the solution is better, update the best solution
+                if sol_index < best_sol_index:
+                    best_sol = sol
+                    best_sol_index = sol_index
+                    max_authorized_index = best_sol_index
     return best_sol
