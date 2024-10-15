@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 from printer import print_table
-from solver import random_solve
+from solver import solve
 from tabler import read_table
 
 files = [
@@ -24,13 +24,14 @@ files = [
 # sys.setrecursionlimit(9999999)
 
 for file in files:
-    print(f"\nSolving {file}...")
-    table = read_table(file)
-    print_table(table)
+    for i in range(8, 12):
+        print(f"\nSolving {file} with {i} limit...")
+        table = read_table(file)[:i, :i]
+        print_table(table)
 
-    start = time.time()
-    solution = random_solve(table, tqdm_disable=False)
-    end = time.time()
+        start = time.time()
+        solution = solve(table, tqdm_disable=False)
+        end = time.time()
 
-    print(f"Solution with {np.max(solution)} in {end - start:4f}s:")
-    print_table(solution)
+        print(f"Solution with {np.max(solution)} in {end - start:4f}s:")
+        print_table(solution)

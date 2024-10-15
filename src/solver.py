@@ -62,7 +62,7 @@ def does_sol_exists(table, solutions):
     return False
 
 
-def random_solve(table, square_index=1, max_authorized_index=np.inf, tqdm_disable=True):
+def solve(table, square_index=1, max_authorized_index=np.inf, tqdm_disable=True):
     # Check if complete
     if is_complete(table):
         return table
@@ -74,11 +74,9 @@ def random_solve(table, square_index=1, max_authorized_index=np.inf, tqdm_disabl
     table, square_index = fill_isolated(
         table, square_index, max_authorized_index=max_authorized_index
     )
-    if table is None:
-        return None
 
     # Calculate bigger square possible on corners
-    if is_complete(table):
+    if table is None or is_complete(table):
         return table
     corners = get_corners(table)
 
@@ -87,9 +85,11 @@ def random_solve(table, square_index=1, max_authorized_index=np.inf, tqdm_disabl
         new_table = table.copy()
 
         new_table = place_square(new_table, x, y, square_index)
+        if is_complete(new_table):
+            return new_table
 
         if not does_sol_exists(new_table, solutions):
-            sol = random_solve(
+            sol = solve(
                 new_table,
                 square_index=square_index + 1,
                 max_authorized_index=max_authorized_index,
